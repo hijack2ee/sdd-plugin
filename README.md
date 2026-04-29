@@ -74,13 +74,12 @@ sdd-plugin/
 ├── docs/
 │   ├── cycle.md
 │   └── conventions.md
-├── skills/
-│   ├── sdd-init/         (bundles constitution.md)
-│   ├── sdd-new/          (bundles templates/)
-│   ├── sdd-revise/
-│   ├── sdd-ship/
-│   └── sdd-archive/
-└── examples/
+└── skills/
+    ├── sdd-init/         (bundles constitution.md)
+    ├── sdd-new/          (bundles templates/)
+    ├── sdd-revise/
+    ├── sdd-ship/
+    └── sdd-archive/
 ```
 
 ## License
