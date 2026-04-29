@@ -11,16 +11,48 @@ Simplified Spec-Driven Development for Claude Code. A lightweight, cyclic altern
 
 ## Install
 
-```bash
-# from any Claude Code session
-/plugin install <git-url>
-```
-
-Or for local development:
+For personal use across all your repos, symlink the five skills into `~/.claude/skills/`. Claude Code auto-discovers anything there — no marketplace, no `/plugin install`, no manifest registration.
 
 ```bash
-git clone <this-repo> ~/.claude/plugins/sdd
+git clone https://github.com/hijack2ee/sdd-plugin ~/code/sdd-plugin   # or wherever
+mkdir -p ~/.claude/skills
+for s in sdd-init sdd-new sdd-revise sdd-ship sdd-archive; do
+  ln -s ~/code/sdd-plugin/skills/$s ~/.claude/skills/$s
+done
 ```
+
+Restart Claude Code. The skills are now globally available.
+
+### Why not `~/.claude/plugins/`?
+
+Claude Code's plugin loader requires formal install via marketplace — dropping files into `~/.claude/plugins/` does **not** auto-discover them. Skills under `~/.claude/skills/` work without that ceremony.
+
+### Update flow
+
+Because the install above is a symlink, `git pull` in the source clone updates all skills immediately. Just restart Claude Code (or `/reload-plugins` if available) to pick up changes.
+
+### Alternative (copy instead of symlink)
+
+If you prefer not to keep the source clone around:
+
+```bash
+git clone https://github.com/hijack2ee/sdd-plugin /tmp/sdd
+cp -r /tmp/sdd/skills/* ~/.claude/skills/
+rm -rf /tmp/sdd
+```
+
+You'll need to re-run this to pick up upstream updates.
+
+### Future: marketplace distribution
+
+The repo is structured as a plugin (`.claude-plugin/plugin.json` + `skills/`) so it can later be published to a Claude Code marketplace. That requires adding `.claude-plugin/marketplace.json` and is out of scope for personal use.
+
+## Invoke
+
+Two ways:
+
+- **Slash command**: `/sdd-init`, `/sdd-new`, `/sdd-revise`, `/sdd-ship`, `/sdd-archive`
+- **Natural language**: "set up SDD here", "start a new feature for X", "ready to open a PR" — Claude picks the right skill from each skill's `description:` frontmatter.
 
 ## Skills
 
