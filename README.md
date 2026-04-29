@@ -16,7 +16,7 @@ For personal use across all your repos, symlink the five skills into `~/.claude/
 ```bash
 git clone https://github.com/hijack2ee/sdd-plugin ~/code/sdd-plugin   # or wherever
 mkdir -p ~/.claude/skills
-for s in sdd-init sdd-new sdd-revise sdd-ship sdd-archive; do
+for s in sdd-init sdd-new sdd-implement sdd-revise sdd-ship sdd-archive; do
   ln -s ~/code/sdd-plugin/skills/$s ~/.claude/skills/$s
 done
 ```
@@ -51,7 +51,7 @@ The repo is structured as a plugin (`.claude-plugin/plugin.json` + `skills/`) so
 
 Two ways:
 
-- **Slash command**: `/sdd-init`, `/sdd-new`, `/sdd-revise`, `/sdd-ship`, `/sdd-archive`
+- **Slash command**: `/sdd-init`, `/sdd-new`, `/sdd-implement`, `/sdd-revise`, `/sdd-ship`, `/sdd-archive`
 - **Natural language**: "set up SDD here", "start a new feature for X", "ready to open a PR" — Claude picks the right skill from each skill's `description:` frontmatter.
 
 ## Skills
@@ -62,6 +62,7 @@ Once installed, these skills become available in any repo:
 |---|---|
 | `sdd-init` | Once per repo. Bootstraps `.specs/` and tailors a project `CLAUDE.md` |
 | `sdd-new` | Starting any feature, bug, or refactor. Interviews you, infers size, drafts content |
+| `sdd-implement` | Right after `sdd-new`. Creates `feat/<name>` branch (or `--worktree`), bumps state, surfaces acceptance criteria, suggests a tracer-bullet first slice |
 | `sdd-revise` | Mid-implementation, when code reveals a spec gap |
 | `sdd-ship` | Right before opening a PR. Verifies spec ↔ code match, drafts PR body |
 | `sdd-archive` | After merge. Moves spec into dated archive |
