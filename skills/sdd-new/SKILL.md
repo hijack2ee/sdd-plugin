@@ -52,8 +52,8 @@ If the user didn't specify, infer:
 
 7. **Update `.specs/CURRENT`** to point to the new feature.
 
-8. **Optional: GitHub issue.** If `gh` CLI is available and the repo has a remote, ask the user "create a GitHub issue?" If yes:
-   - Run `gh issue create --title "<name>" --body "Spec: \`.specs/<name>/\`"`
+8. **GitHub issue.** If `gh` CLI is available and the repo has a remote, always create an issue (no need to ask):
+   - Run `gh issue create --title "<feature-name>" --body "Spec: \`.specs/<name>/\`\n\n## Intent\n<intent text>\n\n## Acceptance criteria\n<criteria list>"`
    - Parse the returned URL for the issue number.
    - Update `issue:` in frontmatter of all spec files.
 

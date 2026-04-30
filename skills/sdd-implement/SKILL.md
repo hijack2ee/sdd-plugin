@@ -25,10 +25,14 @@ Hand off cleanly from spec to code.
    - Repo has no uncommitted changes (warn user if it does, ask before proceeding).
    - Spec has at least one acceptance criterion. If it doesn't, suggest running `sdd-revise` first to add some.
 
-4. **Set up git context:**
+4. **Sync with remote before branching:**
+   - Detect base branch: try `main`, fall back to `master`, fall back to `git symbolic-ref refs/remotes/origin/HEAD`.
+   - Run `git fetch origin` then `git pull origin <base-branch>` to ensure the local base is up to date.
+   - Report the result (e.g. "main is up to date" or "pulled N commits").
+
+5. **Set up git context:**
 
    - **Branch mode (default):**
-     - Detect base branch: try `main`, fall back to `master`, fall back to `git symbolic-ref refs/remotes/origin/HEAD`.
      - If branch `feat/<feature>` already exists:
        - If it's currently checked out: skip with a one-line note.
        - Otherwise: warn — ask user whether to checkout existing or pick a different name.
@@ -41,19 +45,19 @@ Hand off cleanly from spec to code.
      - `git worktree add <path> -b feat/<feature>`.
      - Tell the user the new path; remind them to `cd` there before continuing.
 
-5. **Bump frontmatter state to `implementing`** in every `.md` file in `.specs/<feature>/`.
+6. **Bump frontmatter state to `implementing`** in every `.md` file in `.specs/<feature>/`.
 
-6. **Surface acceptance criteria:**
+7. **Surface acceptance criteria:**
    - Parse `## Acceptance` (small/bug) or `## Acceptance criteria` (medium/large).
    - List **unchecked** items `- [ ]`.
    - Flag uncertain items (`[?]`) — ask the user to confirm or revise before they become coding targets.
 
-7. **Suggest a tracer bullet:**
+8. **Suggest a tracer bullet:**
    - Pick the smallest acceptance criterion that exercises the change end-to-end (input → output).
    - Suggest 2–3 files where the implementation starts. Use the spec's `## Sketch` (small) or `## Components` (medium/large) section as a hint.
    - Explain in one line *why* it's the right tracer — usually "smallest slice that proves the wiring."
 
-8. **Hand off:**
+9. **Hand off:**
    - Confirm git context (branch name, or worktree path).
    - Display the tracer-bullet pick.
    - Return control. The agent's normal coding mode takes over from here. **Do not write production code in this skill** — only set up the runway.
@@ -61,6 +65,7 @@ Hand off cleanly from spec to code.
 ## Output format (branch mode)
 
 ```
+✓ main pulled (up to date / pulled N commits)
 ✓ feat/add-search created (from main)
 ✓ state → implementing
 
