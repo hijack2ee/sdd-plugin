@@ -1,115 +1,165 @@
 ---
 name: sdd-implement
-description: Begin implementing an active feature. Creates a git branch (or worktree), bumps state to implementing, surfaces unchecked acceptance criteria, and suggests the smallest end-to-end slice to code first. Use right after sdd-new, or to re-enter implementation after a break. Trigger phrases - "start implementing", "begin coding feature X", "/sdd-implement", "let's code".
+description: Begin or resume implementation of an approved feature. Reads manifest, verifies approval gate and spec drift, surfaces unchecked acceptance criteria and tasks, and hands off to coding mode. Does NOT create branches (use sdd-branch). Trigger phrases - "start implementing", "/sdd-implement", "resume feature X", "let's code".
 ---
 
 # sdd-implement
 
-Hand off cleanly from spec to code.
+Set up the runway from spec to code. **Does not write production code** — it prepares context, then hands off.
 
 ## Inputs
 
-- **Feature name** — if not provided, read from `.specs/CURRENT`. If still empty, ask user.
-- **Mode** — `branch` (default) or `worktree`. User can pass `--worktree` to opt in.
+- **Feature name** — if omitted, read `.specs/CURRENT`. If still empty, ask user.
+
+## Preconditions
+
+1. `.specs/<feature>/manifest.yaml` exists.
+2. `manifest.approved == true` (else: refuse with anchor message — see below).
+3. `manifest.branch`가 현재 git branch와 일치 (worktree 모드면 worktree 경로도 확인). 다르면 경고하고 사용자 결정 대기.
+4. Repo working tree에 uncommitted changes 없음 (있으면 경고, 사용자 ack 후 진행).
 
 ## Process
 
-1. **Find the feature:**
-   - If user named one, use it.
-   - Otherwise read `.specs/CURRENT`.
-   - If still empty, ask user which feature.
+1. **Find feature** (인자 또는 `.specs/CURRENT`).
 
-2. **Read all spec files** in `.specs/<feature>/`. They are your context for the implementation phase. Don't skip this — re-reading the spec at the start of coding is the point.
+2. **Read manifest.yaml.** 다음 분기:
 
-3. **Pre-flight checks:**
-   - Repo has no uncommitted changes (warn user if it does, ask before proceeding).
-   - Spec has at least one acceptance criterion. If it doesn't, suggest running `sdd-revise` first to add some.
+   | manifest 상태 | 동작 |
+   |---|---|
+   | `approved: false` | **거부**. 한 줄 안내: "approval gate 미통과. `/sdd-new --approve` 먼저." |
+   | `status: shipped` 또는 `archived` | **거부**. "이미 종료된 feature입니다." |
+   | `status: implementing`이고 같은 branch | 재진입 — 정상 진행 |
+   | `status: approved` | 첫 진입 — 정상 진행 |
+   | 그 외 (revising, verifying, ...) | 한 줄 안내 후 진행 (사용자가 의도한 것일 수 있음) |
 
-4. **Sync with remote before branching:**
-   - Detect base branch: try `main`, fall back to `master`, fall back to `git symbolic-ref refs/remotes/origin/HEAD`.
-   - Run `git fetch origin` then `git pull origin <base-branch>` to ensure the local base is up to date.
-   - Report the result (e.g. "main is up to date" or "pulled N commits").
+3. **Drift check:**
+   - `requirements.md + design.md` 내용을 concat → sha256 계산
+   - `manifest.spec_hash`와 비교
+   - 다르면 **경고**:
+     ```
+     ⚠ spec drift detected
+     manifest.spec_hash: 9f2c...
+     current hash:       d41a...
+     /sdd-revise로 변경 사항을 정리하거나, 그대로 진행하려면 ack 해주세요.
+     ```
+   - 사용자 ack 없이는 자동 진행하지 말 것.
 
-5. **Set up git context:**
+4. **Read all spec files** in `.specs/<feature>/`. They are the source of truth.
 
-   - **Branch mode (default):**
-     - If branch `feat/<feature>` already exists:
-       - If it's currently checked out: skip with a one-line note.
-       - Otherwise: warn — ask user whether to checkout existing or pick a different name.
-     - Otherwise: `git checkout -b feat/<feature> <base-branch>`.
+5. **Parse tasks.md:**
+   - 미체크 task 목록 (`- [ ] T<N> — ...`)
+   - 체크된 task 수, 총 task 수
+   - `## Blockers` 섹션 (있으면 표시)
+   - `manifest.progress.total_tasks` / `done` 갱신
 
-   - **Worktree mode** (`--worktree`):
-     - Detect repo root: `git rev-parse --show-toplevel`.
-     - Compute worktree path: `<repo-parent>/<repo-name>-<feature>/`.
-     - If path exists, warn — never overwrite.
-     - `git worktree add <path> -b feat/<feature>`.
-     - Tell the user the new path; remind them to `cd` there before continuing.
+6. **Parse requirements.md `## Acceptance criteria`:**
+   - 미체크 AC 목록
+   - `[?]` 표시된 AC가 있으면 "확인 필요" 경고 → `/sdd-revise` 권장
 
-6. **Bump frontmatter state to `implementing`** in every `.md` file in `.specs/<feature>/`.
+7. **Suggest a tracer bullet** (첫 진입일 때만):
+   - 미체크 task 중 가장 작은 end-to-end slice 선택
+   - 관련 파일 2–3개 제시 (design.md `## Affected modules`에서)
+   - 한 줄로 *왜* 그것이 적절한지
 
-7. **Surface acceptance criteria:**
-   - Parse `## Acceptance` (small/bug) or `## Acceptance criteria` (medium/large).
-   - List **unchecked** items `- [ ]`.
-   - Flag uncertain items (`[?]`) — ask the user to confirm or revise before they become coding targets.
+8. **Bump manifest**:
+   - `status: implementing`
+   - `last_skill: sdd-implement`
+   - `updated_at: <today>`
 
-8. **Suggest a tracer bullet:**
-   - Pick the smallest acceptance criterion that exercises the change end-to-end (input → output).
-   - Suggest 2–3 files where the implementation starts. Use the spec's `## Sketch` (small) or `## Components` (medium/large) section as a hint.
-   - Explain in one line *why* it's the right tracer — usually "smallest slice that proves the wiring."
+9. **Hand off**:
+   - 현재 git 컨텍스트 (branch, worktree path) 출력
+   - 남은 task와 tracer 표시
+   - **명시적 안내**: "각 task 완료 시 `tasks.md`의 체크박스를 `[x]`로 바꾸고 per-task commit 하세요. 막히면 `/sdd-revise`, 끝나면 `/sdd-verify`."
 
-9. **Hand off:**
-   - Confirm git context (branch name, or worktree path).
-   - Display the tracer-bullet pick.
-   - Return control. The agent's normal coding mode takes over from here. **Do not write production code in this skill** — only set up the runway.
+## Per-task commit convention
 
-## Output format (branch mode)
+`manifest.commit_policy == per-task`인 경우 (기본):
 
 ```
-✓ main pulled (up to date / pulled N commits)
-✓ feat/add-search created (from main)
-✓ state → implementing
+<type>(<scope>): T<N> <task title> (refs #<issue>)
+```
+
+- `<type>`: feat/fix/docs/style/refactor/test/chore (manifest.branch의 prefix와 일치 권장)
+- `<scope>`: 영향 모듈명 (optional)
+- 예: `feat(search): T3 SearchBar 컴포넌트 추가 (refs #142)`
+
+## Output format (첫 진입)
+
+```
+✓ feature: add-search
+✓ branch: feat/142-add-search (clean)
+✓ status: approved → implementing
+✓ spec_hash: matches
 
 unchecked acceptance criteria:
-  - [ ] Search input above the notes list, focused by `/` keystroke
-  - [ ] Results filter on each keystroke (debounced 100ms)
-  - [ ] Empty query restores the full list
-  - [?] Matches highlighted in the rendered list   ← uncertain, confirm before coding
+  - [ ] AC1 — Search input above the notes list, focused by `/`
+  - [ ] AC2 — Results filter on each keystroke (debounced 100ms)
+  - [?] AC3 — Matches highlighted in the rendered list  ← 불확실, /sdd-revise로 확정 권장
+
+tasks (3/8 done):
+  remaining:
+  - [ ] T4 — SearchBar 컴포넌트 추가 [refs: AC1, design#SearchBar]
+  - [ ] T5 — Debounce hook [refs: AC2, design#Debounce]
+  - [ ] T6 — 통합 테스트 [refs: AC1, AC2]
+  ...
 
 tracer bullet:
-  pick: "Search input above the notes list, focused by `/` keystroke"
+  pick: T4 — SearchBar 컴포넌트 추가
   files: components/notes/SearchBar.tsx, pages/notes/index.tsx
-  why: smallest end-to-end slice — input + key handler only, no filtering yet
+  why: smallest slice that proves keystroke → handler wiring
 
-ready to code. write the tracer bullet first, then iterate.
+ready to code. 각 task 완료 시 [x] 체크 + commit. 막히면 /sdd-revise, 끝나면 /sdd-verify.
 ```
 
-## Output format (worktree mode)
+## Output format (재진입)
 
 ```
-✓ worktree: ../my-app-add-search/
-✓ branch: feat/add-search
-✓ state → implementing
+✓ feature: add-search (resuming)
+✓ branch: feat/142-add-search
+✓ status: implementing
+✓ spec_hash: matches
+✓ last_skill: sdd-implement (yesterday)
 
-cd ../my-app-add-search/ before continuing.
+progress: 5/8 tasks done
 
-(unchecked acceptance + tracer bullet as above)
+remaining:
+  - [ ] T6 — 통합 테스트
+  - [ ] T7 — empty state UI
+  - [ ] T8 — README 갱신
+
+blockers: (none)
+
+continue. 끝나면 /sdd-verify.
+```
+
+## Output format (refused)
+
+```
+✗ /sdd-implement 거부됨
+
+  feature:  add-search
+  reason:   approval gate 미통과 (manifest.approved == false)
+
+다음 단계: /sdd-new --approve
 ```
 
 ## Constraints
 
-- Do not write production code. This skill only sets up context.
-- Do not switch branches if uncommitted changes exist — warn first.
-- Do not overwrite an existing worktree path.
-- If state is already `implementing` and the branch/worktree exists, skip setup with a one-line note. Don't re-do work.
-- If the spec has zero acceptance criteria, suggest `sdd-revise` to add some before continuing.
+- **Production code를 작성하지 말 것.** 이 skill은 runway만.
+- approval gate(`approved: true`)와 spec_hash drift는 강한 가드. 사용자 ack 없이 우회하지 말 것.
+- branch/worktree 생성은 sdd-branch 책임. 이 skill에서 만들지 말 것.
+- uncommitted changes가 있으면 한 번 경고. 무조건 거부하진 말 것 (의도된 WIP일 수 있음).
+- `[?]` 항목은 tracer bullet으로 절대 고르지 말 것.
 
 ## When to use
 
 ✅ Use:
-- Right after `sdd-new`, when the spec is ready and you want to start coding
-- After a long break, to re-establish full context (re-reads spec, surfaces remaining work)
-- After `sdd-revise` if the revision was substantial enough to warrant re-entering
+- /sdd-new --approve 직후
+- 휴식 후 작업 재개 (재진입)
+- /sdd-revise 직후 다시 코딩 시작
+- /sdd-verify 실패 후 수정 작업 진입
 
 ❌ Don't use:
-- For trivial in-place edits that don't warrant a feature branch
-- When you're already deep in implementation and just need to record a decision — use `sdd-revise`
+- branch가 없거나 잘못된 경우 → `/sdd-branch`
+- approval 안 받은 경우 → `/sdd-new --approve`
+- spec이 바뀌어야 하는 경우 → `/sdd-revise`

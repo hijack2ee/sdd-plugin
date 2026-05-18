@@ -1,96 +1,173 @@
 ---
 name: sdd-ship
-description: Finalize a feature for merge. Verify spec matches what shipped, check off acceptance criteria, draft PR body, optionally open the PR. Use right before opening a PR. Trigger phrases - "ship feature", "open PR", "/sdd-ship", "ready to merge".
+description: Finalize a feature for merge — enforces verify gate (lint/type/test must pass), checks acceptance/task completion, drafts PR body from spec, optionally opens the PR. Trigger phrases - "ship feature", "open PR", "/sdd-ship", "ready to merge".
 ---
 
 # sdd-ship
 
-Make sure spec and code agree, then turn the spec into a PR.
+verify gate를 통과한 feature를 PR로 만든다.
+
+## Inputs
+
+- **Feature name** — if omitted, read `.specs/CURRENT`.
+
+## Preconditions
+
+1. `.specs/<feature>/manifest.yaml` exists.
+2. **`manifest.ci.status == "pass"`** — verify gate를 통과한 적이 있어야 함. 아니면 거부.
+3. **`manifest.ci.commit`**과 현재 `HEAD` SHA가 일치해야 함. 다르면 "verify 이후 commit이 추가됨, `/sdd-verify` 재실행 필요" 경고.
+4. Working tree에 uncommitted changes 없음.
 
 ## Process
 
-1. **Find the feature:**
-   - If user names one, use that.
-   - Otherwise read `.specs/CURRENT`.
+1. **Find feature** (인자 또는 CURRENT).
 
-2. **Read all spec files** in `.specs/<feature>/`.
+2. **Read manifest + 3개 spec.**
 
-3. **Read the diff** against the base branch:
+3. **Verify gate check:**
+   - `manifest.ci.status != "pass"` → 거부: "`/sdd-verify` 먼저."
+   - `manifest.ci.commit != $(git rev-parse HEAD)` → 거부: "verify 이후 새 commit이 있음. `/sdd-verify` 재실행."
+
+4. **Completion check (경고만, 거부하지 않음):**
+   - tasks.md의 모든 task가 `[x]`인가?
+   - requirements.md의 모든 AC가 `[x]`인가?
+   - `[?]` 항목이 남아 있는가?
+   - 미완료 항목이 있으면 표시하고 사용자에게 "계속 진행할지" 물음.
+
+5. **Drift check:**
+   - `spec_hash`와 현재 `requirements + design` 해시 비교
+   - 다르면 거부: "`/sdd-revise`로 spec을 정리하고 다시 `/sdd-verify` → `/sdd-ship`."
+
+6. **Recommend sdd-review (한 번도 안 돌렸으면):**
+   - `manifest.last_skill`에 `sdd-review`가 한 번도 등장하지 않았다면 (또는 ci 이후로 없었다면)
+   - 한 줄 경고: "`/sdd-review`를 먼저 돌리는 걸 권장합니다. 그대로 진행할까요?"
+
+7. **Detect base branch** (manifest.base_branch 사용).
+
+8. **Read diff against base** for PR body context:
    ```
-   git diff $(git merge-base HEAD main)...HEAD --name-only
-   ```
-   (Use `master` if `main` doesn't exist. Detect default branch with `git symbolic-ref refs/remotes/origin/HEAD` if needed.)
-
-4. **Verify spec ↔ code alignment.** This is the core value of this skill — don't skip it:
-
-   - For each acceptance criterion:
-     - If it's clearly implemented in the diff, check the box `[x]`.
-     - If unsure, leave unchecked and flag it to the user.
-   - For each significant change in the diff:
-     - Is it reflected somewhere in the spec (Components, Approach, Decisions)?
-     - If not, **stop and tell the user**: the spec is out of date. Suggest running `sdd-revise` first. Don't proceed to PR.
-   - Confirm `## Decisions` log captures any non-trivial choices visible in the diff.
-
-5. **If alignment passes**, set frontmatter `state: shipped`.
-
-6. **Draft PR body**:
-
-   ```markdown
-   ## Spec
-
-   See `.specs/<feature>/` for the full spec.
-
-   <Closes #<issue-num> if frontmatter has issue number>
-
-   ## Intent
-
-   <pull from spec ## Intent section>
-
-   ## Acceptance
-
-   <pull from spec ## Acceptance section, with check marks>
-
-   ## Decisions
-
-   <pull from spec ## Decisions section if non-empty>
-
-   ---
-
-   <small footer linking to spec files>
+   git log <base>..HEAD --oneline
+   git diff <base>...HEAD --stat
    ```
 
-7. **Open the PR** (only if user confirms):
-   - Title: feature name in title case, or first H1 of the spec
-   - Body: drafted body above
-   - Command: `gh pr create --title "..." --body-file -` (pipe drafted body)
-   - On success, parse the PR URL for the number, update `pr:` in frontmatter.
+9. **Extract "new decisions"** — `design.md ## Decisions`에서 `manifest.approved_at` 이후 날짜의 항목들. (이 PR 기간에 누적된 결정)
 
-8. **Report**:
-   - Alignment check result
-   - PR URL (if opened) or drafted body (if user wants to review first)
+10. **Draft PR body** (아래 템플릿 참조).
+
+11. **Status bump**: `manifest.status: shipping`, `last_skill: sdd-ship`, `updated_at: <today>`.
+
+12. **Title 생성**:
+    - 기본: `<type>(<scope>): <feature title>` — type/scope는 branch name에서 추출
+    - 예: `feat(search): inline search in notes`
+    - 사용자 override 가능
+
+13. **Open PR** (사용자 confirm 후):
+    - `gh pr create --title "..." --body-file - --base <base>`
+    - 응답에서 PR 번호 파싱 → `manifest.pr` 갱신
+
+14. **Report**:
+    - PR URL
+    - draft body (사용자가 검토 원하면)
+
+## PR body template
+
+```markdown
+## Summary
+
+<requirements.md ## Background or ## Goals에서 1-3 bullet>
+
+Closes #<manifest.issue>
+
+## What's in this PR
+
+<tasks.md에서 체크된 task 목록>
+- [x] T1 — ...
+- [x] T2 — ...
+
+## Acceptance criteria
+
+<requirements.md의 AC 그대로>
+- [x] AC1 — ...
+- [x] AC2 — ...
+- [ ] AC3 — (미완료가 있으면 솔직히 표시)
+
+## Decisions made during implementation
+
+<design.md ## Decisions 중 approval 이후 추가된 항목>
+- 2026-05-18 fuse.js 채택. 짧은 쿼리에 substring이 너무 엄격해서
+
+## Test plan
+
+✅ Verify gate passed at <manifest.ci.commit short SHA>
+- `npm run lint`
+- `npm run typecheck`
+- `npm test`
+
+추가로 확인할 항목:
+- [ ] <manual QA가 필요한 경우 추가>
+
+## Spec
+
+전체 spec: `.specs/<feature>/`
+- requirements.md
+- design.md
+- tasks.md
+
+---
+
+🤖 Generated by sdd-plugin (sdd-ship)
+```
 
 ## Output format
 
 ```
-✓ alignment check passed
-✓ acceptance: 4/4 implemented
-✓ state → shipped
+✓ verify gate: pass (sha a1b2c3d)
+✓ drift check: clean
+⚠ 1 unchecked task: T8 (README 갱신) — 계속하시겠어요? [y/n]
 
-PR draft ready. open now? [y/n]
+PR draft ready:
+  title: feat(search): inline search in notes
+  base:  main
+  head:  feat/142-add-search
+
+open PR now? [y/n]
 ```
 
-## When alignment fails
+## Output format (rejected)
 
 ```
-✗ alignment check found gaps:
-  - design.md does not mention components/notes/Highlight.tsx (in diff)
-  - decisions log is empty but you switched from substring to fuzzy match
+✗ /sdd-ship 거부됨
 
-run sdd-revise first to update the spec, then re-run sdd-ship.
+  feature:  add-search
+  reason:   manifest.ci.status == "fail" (verify failed last run)
+
+다음 단계: 실패 원인 수정 → /sdd-verify 재실행 → /sdd-ship
+```
+
+## After PR creation
+
+```
+✓ PR opened: https://github.com/.../pull/168
+✓ manifest.pr: 168
+✓ status: implementing → shipping
+
+PR이 merge되면 /sdd-archive를 실행하세요.
 ```
 
 ## Constraints
 
-- Never open the PR without user confirmation.
-- Never check off an acceptance criterion if you're not confident it's implemented — leave it unchecked and flag it.
-- If `gh` CLI is unavailable, draft the body and tell the user to paste it into a manual PR.
+- verify gate(`ci.status == pass` && SHA 일치)를 우회하지 말 것. 사용자가 `--force`로 우회해도 PR body에 "⚠ verify not passed" 명시.
+- PR title/body는 항상 사용자 confirm 후 생성. 자동 push 금지.
+- 미완료 AC/task가 있어도 사용자가 OK하면 진행 가능. 단, PR body에 솔직히 반영.
+- 이미 PR이 있으면 (`manifest.pr != null`) 새로 만들지 말고 기존을 갱신 권유 (`gh pr edit`).
+
+## When to use
+
+✅ Use:
+- /sdd-verify pass 후
+- /sdd-review로 spec ↔ code 정합 확인 후
+- 모든 task/AC가 체크됐을 때
+
+❌ Don't use:
+- verify 안 돌린 상태
+- spec drift가 있는 상태 → `/sdd-revise` 먼저
