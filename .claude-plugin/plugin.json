@@ -1,7 +1,7 @@
 {
   "name": "sdd",
-  "version": "0.1.0",
-  "description": "Simplified Spec-Driven Development — a lightweight, cyclic alternative to spec-kit. Tier specs by size, evolve them as code reveals reality.",
-  "homepage": "https://github.com/your-org/sdd-plugin",
-  "keywords": ["spec-driven-development", "sdd", "methodology", "workflow"]
+  "version": "0.2.0",
+  "description": "Spec-Driven Development for Claude + Codex. Figma-to-PR flow with mandatory requirements/design/tasks docs, approval gate, and verify gate. Cyclic, LLM-agnostic.",
+  "homepage": "https://github.com/hijack2ee/sdd-plugin",
+  "keywords": ["spec-driven-development", "sdd", "figma", "codex", "claude-code", "workflow"]
 }

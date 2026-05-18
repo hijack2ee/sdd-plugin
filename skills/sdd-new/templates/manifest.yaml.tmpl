@@ -1,0 +1,66 @@
+# Single source of truth for feature metadata.
+# spec 문서들(requirements/design/tasks.md)은 frontmatter를 쓰지 않습니다.
+# 이 파일은 sdd-* skill들이 read/write합니다 — 직접 손으로 편집해도 되지만
+# 가능하면 skill을 통하세요.
+
+feature: <feature-name>           # kebab-case, ≤30 chars, 폴더명과 일치
+created: <date>                   # ISO date, write-once
+updated_at: <date>                # 가장 최근 skill 호출 시각
+
+# --- 진행 상태 ---
+status: drafting                  # drafting | approved | implementing | verifying | reviewing | shipping | shipped | archived
+last_skill: sdd-new               # 마지막으로 이 feature를 건드린 skill (재진입성)
+
+# --- 진입 소스 ---
+source:
+  kind: figma                     # figma | text | issue
+  figma:
+    file_key: null
+    node_id: null
+  text: null
+
+# --- GitHub ---
+issue: null                       # 메인 issue 번호 (sdd-to-issue가 채움)
+parent_issue: null                # sub-task인 경우 부모 issue
+issue_kind: task                  # epic | task | sub-task
+pr: null                          # sdd-ship이 채움
+
+# --- Git ---
+branch: null                      # 예: feat/123-add-search
+base_branch: main
+worktree: null                    # worktree path (없으면 일반 branch)
+
+# --- Approval gate ---
+approved: false                   # sdd-new --approve 또는 사람 확인 후 true
+approved_at: null
+
+# --- Drift detection ---
+spec_hash: null                   # sha256 of requirements.md + design.md
+                                  # sdd-implement 진입 시 비교, sdd-revise가 갱신
+
+# --- 진행도 (tasks.md 파싱) ---
+progress:
+  total_tasks: 0
+  done: 0
+
+# --- 검증 ---
+ci:
+  status: none                    # pass | fail | none
+  last_run: null
+  commit: null
+verify:
+  commands:                       # specs/config.yaml에서 overrride 가능
+    - npm run lint
+    - npm run typecheck
+    - npm test
+
+# --- 블로커 (sdd-implement/verify가 추가) ---
+blockers: []
+# 예시:
+# - task: T5
+#   kind: test_failure
+#   detail: "auth.test.ts:42 expected 200 got 401"
+#   added_at: 2026-05-18
+
+# --- 커밋 정책 ---
+commit_policy: per-task           # per-task | squash
