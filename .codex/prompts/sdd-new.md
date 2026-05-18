@@ -1,7 +1,3 @@
----
-name: sdd-new
-description: Draft a feature's three spec docs (requirements/design/tasks) and initialize manifest.yaml. Use after sdd-from-figma/sdd-from-text/sdd-to-issue/sdd-branch, or as a standalone entry point. Supports --approve mode to pass the approval gate. Trigger phrases - "spec the feature", "draft the spec", "/sdd-new", "/sdd-new --approve".
----
 
 # sdd-new
 

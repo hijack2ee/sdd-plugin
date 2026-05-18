@@ -1,7 +1,3 @@
----
-name: sdd-archive
-description: Cleanup after PR merge — verifies merge, closes issue, removes worktree/branch, moves spec into dated archive, optionally writes a one-line retro. Trigger phrases - "archive feature", "/sdd-archive", "PR merged".
----
 
 # sdd-archive
 

@@ -1,0 +1,37 @@
+# Project-specific SDD config. sdd-* skills read this for conventions.
+# Edit values to match your project. Comments document each field.
+
+# --- sdd-verify ---
+verify:
+  commands:                       # 순서대로 실행. 하나라도 실패하면 verify fail.
+    - npm run lint
+    - npm run typecheck
+    - npm test
+  # 빈 배열로 두면 verify는 통과로 간주 (정적 사이트·docs 전용 repo 등)
+
+# --- sdd-branch ---
+bootstrap:
+  enabled: true
+  script: .specs/bootstrap.sh     # worktree 생성 직후 실행. 없으면 skip.
+
+github:
+  base_branch: main               # sdd-branch가 분기하는 기준
+  allowed_branch_prefixes:        # sdd-branch가 강제
+    - feat
+    - fix
+    - docs
+    - style
+    - refactor
+    - test
+    - chore
+
+# --- sdd-to-issue ---
+issue:
+  default_assignee: null          # null이면 gh CLI 현재 user
+  size_thresholds:                # LOC/file 휴리스틱
+    sub_task_max_files: 3
+    task_max_files: 10
+    # 그 이상이면 epic으로 분류 → sub-task issue 자동 생성
+
+# --- 커밋 정책 ---
+commit_policy: per-task           # per-task | squash

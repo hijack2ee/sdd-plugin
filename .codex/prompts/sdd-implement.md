@@ -1,7 +1,3 @@
----
-name: sdd-implement
-description: Begin or resume implementation of an approved feature. Reads manifest, verifies approval gate and spec drift, surfaces unchecked acceptance criteria and tasks, and hands off to coding mode. Does NOT create branches (use sdd-branch). Trigger phrases - "start implementing", "/sdd-implement", "resume feature X", "let's code".
----
 
 # sdd-implement
 

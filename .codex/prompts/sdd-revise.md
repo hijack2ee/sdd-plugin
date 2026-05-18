@@ -1,7 +1,3 @@
----
-name: sdd-revise
-description: Update an active spec mid-implementation when code reveals a gap, scope changes, or a non-obvious decision needs recording. Recomputes spec_hash and bumps manifest. Trigger phrases - "revise the spec", "update the spec", "/sdd-revise", "spec gap".
----
 
 # sdd-revise
 

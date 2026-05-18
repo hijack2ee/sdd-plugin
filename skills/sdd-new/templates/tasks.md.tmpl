@@ -1,0 +1,30 @@
+# Tasks — <feature-name>
+
+> Created: <date>
+
+requirements.md의 acceptance criteria와 design.md의 컴포넌트를 실제 구현 단위로 쪼갠 체크리스트. `sdd-implement`가 이 파일을 진행 상태의 single source of truth로 사용합니다.
+
+각 task에는 근거(refs)를 달아 두면 sdd-review와 sdd-revise가 역추적할 수 있습니다.
+
+## Progress
+
+- 총: <n>
+- 완료: 0
+- 남음: <n>
+
+## Tasks
+
+- [ ] T1 — <단일 단위 작업> [refs: AC1, design#Affected modules]
+- [ ] T2 — <테스트 추가는 별도 task로> [refs: AC1]
+- [ ] T3 — <...> [refs: AC2, design#Data flow]
+- [ ] T4 — lint/type/test 통과 확인 [refs: all]
+
+## Blockers
+
+구현 중 막힌 항목. sdd-verify 실패나 외부 의존 대기 등.
+
+- (없음)
+
+## Notes
+
+task 단위로 commit하는 정책을 따릅니다 (`<type>(<scope>): T<N> <title> (refs #<issue>)`).

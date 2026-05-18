@@ -1,0 +1,54 @@
+# Design — <feature-name>
+
+> Created: <date>
+
+## Overview
+
+requirements.md의 acceptance criteria를 충족하기 위한 솔루션의 한 단락 요약. 핵심 아이디어가 뭔지, 왜 그 접근을 골랐는지.
+
+## Architecture
+
+<컴포넌트 다이어그램 또는 책임 분할. 텍스트 다이어그램 권장.>
+
+```
+[Client] → [Service A] → [DB]
+              ↓
+          [Queue] → [Worker]
+```
+
+## Affected modules / files
+
+신규·수정 예상 파일과 책임. tasks.md의 task가 여기를 참조합니다.
+
+- `path/to/new-module.ts` — <역할>
+- `path/to/existing.tsx` (수정) — <어떻게 바뀌나>
+
+## Data flow / contracts
+
+- 입력: <스키마/예시>
+- 처리: <단계별>
+- 출력: <스키마/예시>
+- 에러 경로: <fallback, retry, surface>
+
+## Alternatives considered
+
+대안과 기각 이유. 미래의 본인·동료가 "왜 안 그랬어?"를 묻지 않도록.
+
+| 대안 | 장점 | 기각 이유 |
+|---|---|---|
+| A안 | ... | ... |
+| B안 | ... | ... |
+
+## Risks
+
+- <기술/일정/외부 의존> — 완화 방안
+
+## Decisions
+
+구현 중 내린 비자명한 결정을 append-only로 누적. 한 줄 + 날짜.
+
+- <date> <one-line decision>
+
+## Change log
+
+- <date> initial draft

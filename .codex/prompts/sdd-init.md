@@ -1,7 +1,3 @@
----
-name: sdd-init
-description: Bootstrap a repo to use Spec-Driven Development (v2). Creates .specs/ scaffolding, config.yaml, and tailors a project CLAUDE.md to the detected stack. Use once per repo on day one. Trigger phrases - "set up SDD", "initialize SDD", "/sdd-init".
----
 
 # sdd-init
 

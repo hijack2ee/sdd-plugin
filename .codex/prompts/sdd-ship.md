@@ -1,7 +1,3 @@
----
-name: sdd-ship
-description: Finalize a feature for merge — enforces verify gate (lint/type/test must pass), checks acceptance/task completion, drafts PR body from spec, optionally opens the PR. Trigger phrases - "ship feature", "open PR", "/sdd-ship", "ready to merge".
----
 
 # sdd-ship
 
